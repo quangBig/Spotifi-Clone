@@ -4,13 +4,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useMusicStore } from "@/stores/useMusicStore";
 import { SignedIn } from "@clerk/clerk-react";
-import {HomeIcon, Library, MessageCircle, Search, Heart} from "lucide-react";
-import {useEffect, useState} from "react";
+import { HomeIcon, Library, MessageCircle, Search, Heart } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const LeftSidebar = () => {
 	const { albums, fetchAlbums, isLoading } = useMusicStore();
-	const [ search , setSearch ] = useState("");
+	const [search, setSearch] = useState("");
 
 	const filterSearch = albums.filter((album) =>
 		album.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -58,7 +58,7 @@ const LeftSidebar = () => {
 					</SignedIn>
 					<SignedIn>
 						<Link
-							to={"/chat"}
+							to={"/favorites"}
 							className={cn(
 								buttonVariants({
 									variant: "ghost",
@@ -66,7 +66,7 @@ const LeftSidebar = () => {
 								})
 							)}
 						>
-							<Heart  className='mr-2 size-5' />
+							<Heart className='mr-2 size-5' />
 							<span className='hidden md:inline'>Albums, Songs Favorites</span>
 						</Link>
 					</SignedIn>

@@ -12,11 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { axiosInstance } from "@/lib/axios";
 import { useMusicStore } from "@/stores/useMusicStore";
-import { Plus, Upload } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { AlignCenter, AlignLeft, AlignRight, Plus, Upload } from "lucide-react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
-import Quill from "quill";
-import "quill/dist/quill.snow.css"; // quill css
 
 interface NewSong {
 	title: string;
@@ -30,6 +28,7 @@ const AddSongDialog = () => {
 	const { albums } = useMusicStore();
 	const [songDialogOpen, setSongDialogOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+	const [textAlign, setTextAlign] = useState<"left" | "center" | "right">("left");
 
 	const [newSong, setNewSong] = useState<NewSong>({
 		title: "",
@@ -46,47 +45,16 @@ const AddSongDialog = () => {
 
 	const audioInputRef = useRef<HTMLInputElement>(null);
 	const imageInputRef = useRef<HTMLInputElement>(null);
-	const quillRef = useRef<HTMLDivElement>(null);
-
-	// Init quill editor
-	useEffect(() => {
-		if (!quillRef.current) return;
-
-		const quill = new Quill(quillRef.current, {
-			theme: "snow",
-			placeholder: "Write lyrics here...",
-			modules: {
-				toolbar: [
-					["bold", "italic", "underline"],
-					[{ list: "ordered" }, { list: "bullet" }],
-					[{ align: [] }],
-					["link"],
-				],
-			}
-
-		});
-
-		// Load existing lyrics
-		quill.root.innerHTML = newSong.lyrics;
-
-		quill.on("text-change", () => {
-			setNewSong((prev) => ({
-				...prev,
-				lyrics: quill.root.innerHTML,
-			}));
-		});
-	}, []);
+	const lyricsTextareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const handleSubmit = async () => {
 		setIsLoading(true);
-
 		try {
 			if (!files.audio || !files.image) {
 				return toast.error("Please upload both audio and image files");
 			}
 
 			const formData = new FormData();
-
 			formData.append("title", newSong.title);
 			formData.append("artist", newSong.artist);
 			formData.append("duration", newSong.duration);
@@ -94,7 +62,6 @@ const AddSongDialog = () => {
 			if (newSong.album && newSong.album !== "none") {
 				formData.append("albumId", newSong.album);
 			}
-
 			formData.append("audioFile", files.audio);
 			formData.append("imageFile", files.image);
 
@@ -111,18 +78,39 @@ const AddSongDialog = () => {
 				lyrics: "",
 				duration: "0",
 			});
-
-			setFiles({
-				audio: null,
-				image: null,
-			});
-
+			setFiles({ audio: null, image: null });
 			toast.success("Song added successfully");
 			setSongDialogOpen(false);
 		} catch (error: any) {
 			toast.error("Failed to add song: " + error.message);
 		} finally {
 			setIsLoading(false);
+		}
+	};
+
+	const handleTextAlign = (align: "left" | "center" | "right") => {
+		setTextAlign(align);
+		if (lyricsTextareaRef.current) {
+			lyricsTextareaRef.current.style.textAlign = align;
+		}
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			const textarea = e.currentTarget;
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const value = textarea.value;
+
+			// Insert new line with current alignment
+			const newValue = value.substring(0, start) + "\n" + value.substring(end);
+			setNewSong({ ...newSong, lyrics: newValue });
+
+			// Move cursor to new position
+			setTimeout(() => {
+				textarea.selectionStart = textarea.selectionEnd = start + 1;
+			}, 0);
 		}
 	};
 
@@ -140,6 +128,7 @@ const AddSongDialog = () => {
 					<DialogTitle>Add New Song</DialogTitle>
 					<DialogDescription>Add a new song to your music library</DialogDescription>
 				</DialogHeader>
+
 
 				<div className='space-y-4 py-4'>
 					<input
@@ -223,15 +212,50 @@ const AddSongDialog = () => {
 						/>
 					</div>
 
-					{/* Lyrics with Quill */}
+					{/* Lyrics Editor */}
 					<div className='space-y-2'>
-						<label className='text-sm font-medium text-white'>Lyrics</label>
-						<div className='bg-white text-black rounded-md'>
-							<div ref={quillRef} style={{ height: "200px" }} />
+						<label className='text-sm font-medium'>Lyrics</label>
+						<div className='flex gap-2 mb-2'>
+							<Button
+								variant={textAlign === "left" ? "default" : "outline"}
+								size="sm"
+								onClick={() => handleTextAlign("left")}
+								className="p-2 h-8"
+							>
+								<AlignLeft className="h-4 w-4" />
+							</Button>
+							<Button
+								variant={textAlign === "center" ? "default" : "outline"}
+								size="sm"
+								onClick={() => handleTextAlign("center")}
+								className="p-2 h-8"
+							>
+								<AlignCenter className="h-4 w-4" />
+							</Button>
+							<Button
+								variant={textAlign === "right" ? "default" : "outline"}
+								size="sm"
+								onClick={() => handleTextAlign("right")}
+								className="p-2 h-8"
+							>
+								<AlignRight className="h-4 w-4" />
+							</Button>
 						</div>
+
+						<textarea
+							ref={lyricsTextareaRef}
+							value={newSong.lyrics}
+							onChange={(e) => setNewSong({ ...newSong, lyrics: e.target.value })}
+							onKeyDown={handleKeyDown}
+							className='w-full h-40 p-3 bg-zinc-800 border border-zinc-700 rounded-md resize-none'
+							style={{ textAlign }}
+							placeholder="Enter lyrics here...
+              
+Use Shift+Enter for new line
+Click alignment buttons to change text alignment"
+						/>
 					</div>
 
-					{/* Album */}
 					<div className='space-y-2'>
 						<label className='text-sm font-medium'>Album (Optional)</label>
 						<Select
@@ -252,6 +276,7 @@ const AddSongDialog = () => {
 						</Select>
 					</div>
 				</div>
+
 
 				<DialogFooter>
 					<Button variant='outline' onClick={() => setSongDialogOpen(false)} disabled={isLoading}>

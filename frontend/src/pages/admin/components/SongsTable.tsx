@@ -13,14 +13,18 @@ const SongsTable = () => {
 		title: "",
 		artist: "",
 		imageUrl: "",
+		lyrics: "",
 		duration: ""
 	});
+
 	const [search, setSearch] = useState("");
-	const filterSong = songs.filter((songs) =>
-		songs.title.toLowerCase().includes(search.toLowerCase()) ||
-		songs.artist.toLowerCase().includes(search.toLowerCase())
-	)
+	const filterSong = songs.filter((song) =>
+		song.title.toLowerCase().includes(search.toLowerCase()) ||
+		song.artist.toLowerCase().includes(search.toLowerCase())
+	);
+
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const lyricsTextareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const handleEditClick = (song: any) => {
 		setEditingId(song._id);
@@ -28,18 +32,24 @@ const SongsTable = () => {
 			title: song.title,
 			artist: song.artist,
 			imageUrl: song.imageUrl,
+			lyrics: song.lyrics,
 			duration: song.duration
 		});
+
+		// Focus vào textarea lyrics khi mở chỉnh sửa
+		setTimeout(() => {
+			lyricsTextareaRef.current?.focus();
+		}, 0);
 	};
 
 	const handleDelete = async (id: string) => {
 		try {
-			const isComfirm = window.confirm("Are you sure you want to delete this song?");
-			if (!isComfirm) return;
+			const isConfirm = window.confirm("Are you sure you want to delete this song?");
+			if (!isConfirm) return;
 			await deleteSong(id);
 			toast.success("Song deleted successfully");
 		} catch (err) {
-			toast.error("Failed to delete song:");
+			toast.error("Failed to delete song");
 		}
 	};
 
@@ -50,6 +60,10 @@ const SongsTable = () => {
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		setEditData(prev => ({ ...prev, [name]: value }));
+	};
+
+	const handleLyricsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setEditData(prev => ({ ...prev, lyrics: e.target.value }));
 	};
 
 	const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,10 +86,12 @@ const SongsTable = () => {
 
 	const handleSaveEdit = async (id: string) => {
 		try {
-			await editSong(id, editData); // Gửi lên backend
+			await editSong(id, editData);
 			setEditingId(null);
+			toast.success("Song updated successfully");
 		} catch (err) {
 			console.error("Failed to update song:", err);
+			toast.error("Failed to update song");
 		}
 	};
 
@@ -89,21 +105,19 @@ const SongsTable = () => {
 
 	return (
 		<>
-
-			<div className="flex items-center gap-2  bg-zinc-700 border border-zinc-700  rounded-2xl px-4 py-2 shadow-md w-full max-w-md">
-
+			<div className="flex items-center gap-2 bg-zinc-700 border border-zinc-700 rounded-2xl px-4 py-2 shadow-md w-full max-w-md mb-4">
 				<input
 					type="text"
 					placeholder="Tìm kiếm..."
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
-
 					className="outline-none w-full text-sm bg-transparent"
 				/>
 				<button>
 					<Search className="text-gray-500 w-5 h-5" />
 				</button>
 			</div>
+
 			<Table>
 				<TableHeader>
 					<TableRow className='hover:bg-zinc-800/50'>
@@ -112,6 +126,7 @@ const SongsTable = () => {
 						<TableHead>Artist</TableHead>
 						<TableHead>Duration</TableHead>
 						<TableHead>Release Date</TableHead>
+						<TableHead>Lyrics</TableHead>
 						<TableHead className='text-right'>Actions</TableHead>
 					</TableRow>
 				</TableHeader>
@@ -158,7 +173,7 @@ const SongsTable = () => {
 										name="title"
 										value={editData.title}
 										onChange={handleInputChange}
-										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1"
+										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 w-full"
 									/>
 								) : (
 									song.title
@@ -172,7 +187,7 @@ const SongsTable = () => {
 										name="artist"
 										value={editData.artist}
 										onChange={handleInputChange}
-										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1"
+										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 w-full"
 									/>
 								) : (
 									song.artist
@@ -186,19 +201,35 @@ const SongsTable = () => {
 										name="duration"
 										value={editData.duration}
 										onChange={handleInputChange}
-										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1"
+										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 w-full"
 									/>
 								) : (
 									song.duration
 								)}
 							</TableCell>
 
-
 							<TableCell>
 								<span className='inline-flex items-center gap-1 text-zinc-400'>
 									<Calendar className='h-4 w-4' />
 									{song.createdAt.split("T")[0]}
 								</span>
+							</TableCell>
+
+							<TableCell className="max-w-[300px]">
+								{editingId === song._id ? (
+									<textarea
+										ref={lyricsTextareaRef}
+										name="lyrics"
+										value={editData.lyrics}
+										onChange={handleLyricsChange}
+										className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 w-full h-24 whitespace-pre-line"
+										style={{ resize: "vertical" }}
+									/>
+								) : (
+									<div className="whitespace-pre-line line-clamp-3 max-h-[60px] overflow-hidden">
+										{song.lyrics}
+									</div>
+								)}
 							</TableCell>
 
 							<TableCell className='text-right'>
@@ -251,4 +282,5 @@ const SongsTable = () => {
 		</>
 	);
 };
+
 export default SongsTable;

@@ -3,6 +3,8 @@ import { Album, Song, Stats } from "@/types";
 import toast from "react-hot-toast";
 import { create } from "zustand";
 
+
+
 interface MusicStore {
 	songs: Song[];
 	albums: Album[];
@@ -30,6 +32,7 @@ interface MusicStore {
 export const useMusicStore = create<MusicStore>((set) => ({
 	albums: [],
 	songs: [],
+	favorites: [],
 	isLoading: false,
 	error: null,
 	currentAlbum: null,
