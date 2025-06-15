@@ -20,6 +20,9 @@ interface ChatStore {
 	sendMessage: (receiverId: string, senderId: string, content: string) => void;
 	fetchMessages: (userId: string) => Promise<void>;
 	setSelectedUser: (user: User | null) => void;
+	addReaction: (messageId: string, emoji: string) => Promise<void>;
+	removeReaction: (messageId: string) => Promise<void>;
+	updateMessage: (updatedMessage: Message) => void;
 }
 
 const baseURL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
@@ -41,6 +44,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	selectedUser: null,
 
 	setSelectedUser: (user) => set({ selectedUser: user }),
+
+	updateMessage: (updatedMessage) => {
+		set((state) => ({
+			messages: state.messages.map((msg) =>
+				msg._id === updatedMessage._id ? updatedMessage : msg
+			),
+		}));
+	},
 
 	fetchUsers: async () => {
 		set({ isLoading: true, error: null });
@@ -95,6 +106,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				}));
 			});
 
+			socket.on("reactions_added", (updatedMessage: Message) => {
+				get().updateMessage(updatedMessage);
+			});
+
+			socket.on("reactions_removed", (updatedMessage: Message) => {
+				get().updateMessage(updatedMessage);
+			});
+
 			socket.on("activity_updated", ({ userId, activity }) => {
 				set((state) => {
 					const newActivities = new Map(state.userActivities);
@@ -130,6 +149,32 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			set({ error: error.response.data.message });
 		} finally {
 			set({ isLoading: false });
+		}
+	},
+
+	addReaction: async (messageId: string, emoji: string) => {
+		try {
+			const response = await axiosInstance.post(`/users/messages/${messageId}/reactions`, { emoji });
+			const socket = get().socket;
+			if (socket) {
+				socket.emit("reactions_added", response.data);
+				get().updateMessage(response.data);
+			}
+		} catch (error: any) {
+			set({ error: error.response.data.message });
+		}
+	},
+
+	removeReaction: async (messageId: string) => {
+		try {
+			const response = await axiosInstance.delete(`/users/messages/${messageId}/reactions`);
+			const socket = get().socket;
+			if (socket) {
+				socket.emit("reactions_removed", response.data);
+				get().updateMessage(response.data);
+			}
+		} catch (error: any) {
+			set({ error: error.response.data.message });
 		}
 	},
 }));

@@ -7,6 +7,7 @@ import ChatHeader from "./components/ChatHeader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import MessageInput from "./components/MessageInput";
+import { MessageReactions } from "./components/MessageReactions";
 
 const formatTime = (date: string) => {
 	return new Date(date).toLocaleTimeString("en-US", {
@@ -49,9 +50,8 @@ const ChatPage = () => {
 									{messages.map((message) => (
 										<div
 											key={message._id}
-											className={`flex items-start gap-3 ${
-												message.senderId === user?.id ? "flex-row-reverse" : ""
-											}`}
+											className={`flex items-start gap-3 ${message.senderId === user?.id ? "flex-row-reverse" : ""
+												}`}
 										>
 											<Avatar className='size-8'>
 												<AvatarImage
@@ -64,7 +64,7 @@ const ChatPage = () => {
 											</Avatar>
 
 											<div
-												className={`rounded-lg p-3 max-w-[70%]
+												className={`rounded-lg p-3 max-w-[70%] group relative
 													${message.senderId === user?.id ? "bg-green-500" : "bg-zinc-800"}
 												`}
 											>
@@ -72,6 +72,11 @@ const ChatPage = () => {
 												<span className='text-xs text-zinc-300 mt-1 block'>
 													{formatTime(message.createdAt)}
 												</span>
+												<MessageReactions
+													messageId={message._id}
+													reactions={message.reactions || []}
+													isOwnMessage={message.senderId === user?.id}
+												/>
 											</div>
 										</div>
 									))}

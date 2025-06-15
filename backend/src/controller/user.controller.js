@@ -35,38 +35,41 @@ export const addReaction = async (req, res, next) => {
 		const { emoji } = req.body;
 		const userId = req.auth.userId;
 
+		if (!emoji) {
+			return res.status(400).json({ message: "Emoji is required" });
+		}
+
 		const message = await Message.findById(messageId);
 		if (!message) {
 			return res.status(404).json({ message: "Message not found" });
 		}
+
 		// Remove existing reaction from this user if exists
-
-		message.reactions = message.reactions.filter((reaction) =>
-			reaction.userId !== userId
+		message.reactions = message.reactions.filter(
+			reaction => reaction.userId !== userId
 		);
-		// Add new reactions
 
+		// Add new reaction
 		message.reactions.push({ userId, emoji });
 		await message.save();
 
 		res.status(200).json(message);
-
 	} catch (error) {
 		next(error);
 	}
-}
-
+};
 
 export const removeReaction = async (req, res, next) => {
 	try {
 		const { messageId } = req.params;
-		const { emoji } = req.body
+		const userId = req.auth.userId;
 
 		const message = await Message.findById(messageId);
 		if (!message) {
 			return res.status(404).json({ message: "Message not found" });
 		}
 
+		// Remove user's reaction
 		message.reactions = message.reactions.filter(
 			reaction => reaction.userId !== userId
 		);
@@ -74,7 +77,7 @@ export const removeReaction = async (req, res, next) => {
 		await message.save();
 		res.status(200).json(message);
 	} catch (error) {
-		next(error)
+		next(error);
 	}
-}
+};
 
