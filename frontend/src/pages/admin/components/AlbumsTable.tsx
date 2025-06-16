@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMusicStore } from "@/stores/useMusicStore";
-import {Calendar, Music, Trash2, SquarePen, Check, X, Upload, Search} from "lucide-react";
+import { Calendar, Music, Trash2, SquarePen, Check, X, Upload, Search } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 
 const AlbumsTable = () => {
@@ -36,14 +36,19 @@ const AlbumsTable = () => {
 	};
 
 	const handleCancelEdit = () => {
+		if (editData.imageUrl && editData.imageUrl.startsWith('blob:')) {
+			URL.revokeObjectURL(editData.imageUrl);
+		}
 		setEditingId(null);
 	};
 
-
 	const handleSaveEdit = async (id: string) => {
 		try {
-			await editAlbum(id, editData);  // Gửi cả editData
+			await editAlbum(id, editData);
 			setEditingId(null);
+			if (editData.imageUrl && editData.imageUrl.startsWith('blob:')) {
+				URL.revokeObjectURL(editData.imageUrl);
+			}
 			fetchAlbums();
 		} catch (error) {
 			console.error("Failed to update album:", error);
@@ -61,18 +66,14 @@ const AlbumsTable = () => {
 	const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (file) {
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setEditData(prev => ({
-					...prev,
-					imageUrl: reader.result as string,
-					imageFile: file  // Lưu cả file để gửi lên server
-				}));
-			};
-			reader.readAsDataURL(file);
+			const previewUrl = URL.createObjectURL(file);
+			setEditData(prev => ({
+				...prev,
+				imageUrl: previewUrl,
+				imageFile: file
+			}));
 		}
 	};
-
 
 	const triggerFileInput = () => {
 		fileInputRef.current?.click();
@@ -135,7 +136,15 @@ const AlbumsTable = () => {
 										/>
 									</div>
 								) : (
-									<img src={album.imageUrl} alt={album.title} className='w-10 h-10 rounded object-cover' />
+									<img
+										src={album.imageUrl}
+										alt={album.title}
+										className='w-10 h-10 rounded object-cover'
+										onError={(e) => {
+											e.currentTarget.src = '/placeholder-image.png'; // Fallback image
+											e.currentTarget.onerror = null; // Prevent infinite loop
+										}}
+									/>
 								)}
 							</TableCell>
 							<TableCell className='font-medium'>
@@ -175,16 +184,16 @@ const AlbumsTable = () => {
 									/>
 								) : (
 									<span className='inline-flex items-center gap-1 text-zinc-400'>
-									<Calendar className='h-4 w-4' />
+										<Calendar className='h-4 w-4' />
 										{album.releaseYear}
-								</span>
+									</span>
 								)}
 							</TableCell>
 							<TableCell>
-							<span className='inline-flex items-center gap-1 text-zinc-400'>
-								<Music className='h-4 w-4' />
-								{album.songs.length} songs
-							</span>
+								<span className='inline-flex items-center gap-1 text-zinc-400'>
+									<Music className='h-4 w-4' />
+									{album.songs.length} songs
+								</span>
 							</TableCell>
 							<TableCell className='text-right'>
 								<div className='flex gap-2 justify-end'>

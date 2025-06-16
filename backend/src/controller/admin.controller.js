@@ -5,13 +5,33 @@ import cloudinary from "../lib/cloudinary.js";
 // helper function for cloudinary uploads
 const uploadToCloudinary = async (file) => {
 	try {
+		if (!file) {
+			throw new Error("No file provided");
+		}
+
+		// Validate file type
+		const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+		if (!allowedTypes.includes(file.mimetype)) {
+			throw new Error("Invalid file type. Only JPEG, PNG, GIF and WebP images are allowed");
+		}
+
+		// Validate file size (5MB max)
+		const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+		if (file.size > maxSize) {
+			throw new Error("File size too large. Maximum size is 5MB");
+		}
+
 		const result = await cloudinary.uploader.upload(file.tempFilePath, {
 			resource_type: "auto",
+			folder: "spotify-project", // Organize uploads in a folder
+			quality: "auto", // Optimize image quality
+			fetch_format: "auto" // Automatically choose the best format
 		});
+
 		return result.secure_url;
 	} catch (error) {
 		console.log("Error in uploadToCloudinary", error);
-		throw new Error("Error uploading to cloudinary");
+		throw new Error(error.message || "Error uploading to cloudinary");
 	}
 };
 
@@ -87,7 +107,8 @@ export const editSong = async (req, res, next) => {
 			artist,
 			albumId,
 			lyrics,
-			duration
+			duration,
+
 		} = req.body;
 		const song = await Song.findById(id);
 		if (!song) {
@@ -99,7 +120,8 @@ export const editSong = async (req, res, next) => {
 			title: title || song.title,
 			artist: artist || song.artist,
 			duration: duration || song.duration,
-			lyrics: lyrics || song.lyrics
+			lyrics: lyrics || song.lyrics,
+
 		};
 		// Xử lí albumId thay đổi
 		if (albumId !== undefined && albumId !== song.albumId) {
