@@ -9,11 +9,12 @@ A full-stack Spotify clone with real-time features, built with modern web techno
   - Volume control with slider
   - Real-time playback status
   - See what others are listening to
+  - Favorites song and albums
 
 - 👨‍💼 User Features
   - User authentication with Clerk
   - Online/Offline status tracking
-  - Real-time user activity
+  - Real-time user activity, delete and add emoji
   - Favorite songs and albums management
   - Create and manage personal playlists
   - Save and organize favorite tracks
