@@ -50,35 +50,36 @@ export const useMusicStore = create<MusicStore>((set) => ({
 		try {
 			const formData = new FormData();
 			// Append các trường dữ liệu
-
 			if (data.title) formData.append('title', data.title);
 			if (data.artist) formData.append('artist', data.artist);
 			if (data.duration) formData.append('duration', data.duration);
 			if (data.albumId !== undefined) formData.append('albumId', data.albumId);
+			if (data.lyrics) formData.append('lyrics', data.lyrics);
 
 			if (data.audioFile) {
-				formData.append("audioFile", data.audioFile); // Phải trùng tên với field backend mong đợi
+				formData.append("audioFile", data.audioFile);
 			}
 			if (data.imageFile) {
-				formData.append("imageFile", data.imageFile); // Phải trùng tên với field backend mong đợi
+				formData.append("imageFile", data.imageFile);
 			}
 
 			const response = await axiosInstance.put(`/admin/songs/${id}`, formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data'
 				}
-			})
+			});
+
 			set((state) => ({
 				songs: state.songs.map((song) =>
 					song._id === id ? response.data : song
 				),
 			}));
 
-			toast.success("Song updated successfully");
+
 			return response.data;
 		} catch (error: any) {
 			console.log("Error updating song", error);
-			toast.error("Failed to update album: " + error.message);
+			toast.error("Failed to update song: " + error.message);
 			throw error;
 		} finally {
 			set({ isLoading: false })
@@ -92,7 +93,7 @@ export const useMusicStore = create<MusicStore>((set) => ({
 			set((state) => ({
 				songs: state.songs.filter((song) => song._id !== id),
 			}));
-			toast.success("Song deleted successfully");
+
 		} catch (error: any) {
 			console.log("Error in deleteSong", error);
 			toast.error("Error deleting song");
@@ -100,7 +101,7 @@ export const useMusicStore = create<MusicStore>((set) => ({
 			set({ isLoading: false });
 		}
 	},
-	editAlbum: async (id, data) => {  // Thêm tham số data
+	editAlbum: async (id, data) => {
 		set({ isLoading: true, error: null });
 		try {
 			const formData = new FormData();
@@ -110,12 +111,12 @@ export const useMusicStore = create<MusicStore>((set) => ({
 			if (data.artist) formData.append('artist', data.artist);
 			if (data.releaseYear) formData.append('releaseYear', data.releaseYear);
 			if (data.imageFile) {  // Nếu có file ảnh mới
-				formData.append('image', data.imageFile);
+				formData.append('imageFile', data.imageFile);
 			}
 
 			const response = await axiosInstance.put(`/admin/albums/${id}`, formData, {
 				headers: {
-					'Content-Type': 'multipart/form-data',  // Đúng vị trí cho headers
+					'Content-Type': 'multipart/form-data',
 				},
 			});
 

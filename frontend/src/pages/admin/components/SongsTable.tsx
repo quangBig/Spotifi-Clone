@@ -54,6 +54,10 @@ const SongsTable = () => {
 	};
 
 	const handleCancelEdit = () => {
+		// Giải phóng URL tạm thời khi hủy edit
+		if (editData.imageUrl && editData.imageUrl.startsWith('blob:')) {
+			URL.revokeObjectURL(editData.imageUrl);
+		}
 		setEditingId(null);
 	};
 
@@ -69,14 +73,13 @@ const SongsTable = () => {
 	const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (file) {
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setEditData(prev => ({
-					...prev,
-					imageUrl: reader.result as string
-				}));
-			};
-			reader.readAsDataURL(file);
+			// Tạo URL tạm thời để hiển thị preview
+			const previewUrl = URL.createObjectURL(file);
+			setEditData(prev => ({
+				...prev,
+				imageUrl: previewUrl,
+				imageFile: file  // Lưu file để gửi lên server
+			}));
 		}
 	};
 
@@ -88,6 +91,10 @@ const SongsTable = () => {
 		try {
 			await editSong(id, editData);
 			setEditingId(null);
+			// Giải phóng URL tạm thời
+			if (editData.imageUrl && editData.imageUrl.startsWith('blob:')) {
+				URL.revokeObjectURL(editData.imageUrl);
+			}
 			toast.success("Song updated successfully");
 		} catch (err) {
 			console.error("Failed to update song:", err);
@@ -162,7 +169,15 @@ const SongsTable = () => {
 										/>
 									</div>
 								) : (
-									<img src={song.imageUrl} alt={song.title} className='size-10 rounded object-cover' />
+									<img
+										src={song.imageUrl}
+										alt={song.title}
+										className='size-10 rounded object-cover'
+										onError={(e) => {
+											e.currentTarget.src = '/placeholder-image.png'; // Fallback image
+											e.currentTarget.onerror = null; // Prevent infinite loop
+										}}
+									/>
 								)}
 							</TableCell>
 
