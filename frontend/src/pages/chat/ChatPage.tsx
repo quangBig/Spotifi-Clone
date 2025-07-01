@@ -50,9 +50,10 @@ const ChatPage = () => {
 									{messages.map((message) => (
 										<div
 											key={message._id}
-											className={`flex items-start gap-3 ${message.senderId === user?.id ? "flex-row-reverse" : ""
-												}`}
+
+											className={`relative flex items-start gap-3 ${message.senderId === user?.id ? "flex-row-reverse" : ""}`}
 										>
+
 											<Avatar className='size-8'>
 												<AvatarImage
 													src={
@@ -65,7 +66,7 @@ const ChatPage = () => {
 
 											<div
 												className={`rounded-lg p-3 max-w-[70%] group relative
-													${message.senderId === user?.id ? "bg-green-500" : "bg-zinc-800"}
+													${message.senderId === user?.id ? "bg-blue-500" : "bg-zinc-800"}
 												`}
 											>
 												<p className='text-sm'>{message.content}</p>
@@ -76,6 +77,7 @@ const ChatPage = () => {
 													messageId={message._id}
 													reactions={message.reactions || []}
 													isOwnMessage={message.senderId === user?.id}
+													originalContent={message.content}
 												/>
 											</div>
 										</div>

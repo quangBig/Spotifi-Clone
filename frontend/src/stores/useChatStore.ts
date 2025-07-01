@@ -23,6 +23,8 @@ interface ChatStore {
 	addReaction: (messageId: string, emoji: string) => Promise<void>;
 	removeReaction: (messageId: string) => Promise<void>;
 	updateMessage: (updatedMessage: Message) => void;
+	editMessage: (messageId: string, newContent: string) => Promise<void>;
+	deleteMessage: (messageId: string) => Promise<void>;
 }
 
 const baseURL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
@@ -177,4 +179,40 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			set({ error: error.response.data.message });
 		}
 	},
+
+	editMessage: async (messageId, newContent) => {
+		try {
+			const response = await axiosInstance.put(`/users/messages/${messageId}`, {
+				content: newContent,
+			});
+
+			const socket = get().socket;
+			if (socket) {
+				socket.emit("message_edited", response.data);
+			}
+
+			get().updateMessage(response.data);
+		} catch (error: any) {
+			set({ error: error.response?.data?.message || "Edit failed" });
+		}
+	},
+
+	deleteMessage: async (messageId) => {
+		try {
+			await axiosInstance.delete(`/users/messages/${messageId}`);
+
+			const socket = get().socket;
+			if (socket) {
+				socket.emit("message_deleted", { messageId });
+			}
+
+			// Remove from store
+			set((state) => ({
+				messages: state.messages.filter((m) => m._id !== messageId),
+			}));
+		} catch (error: any) {
+			set({ error: error.response?.data?.message || "Delete failed" });
+		}
+	},
+
 }));

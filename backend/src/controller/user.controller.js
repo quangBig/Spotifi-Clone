@@ -124,9 +124,11 @@ export const deleteMessage = async (req, res, next) => {
 			return res.status(403).json({ message: "You can only delete your own messages" });
 		}
 
-		await Message.deleteOne(messageId);
+		await message.deleteOne();
+
 		res.status(200).json({ message: "Message deleted successfully" });
 	} catch (error) {
-		next(error);
+		console.error("❌ Error deleting message:", error);
+		res.status(500).json({ message: "Internal Server Error" });
 	}
-}
+};
