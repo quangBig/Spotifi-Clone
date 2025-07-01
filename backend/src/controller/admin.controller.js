@@ -3,29 +3,40 @@ import { Album } from "../models/album.model.js";
 import cloudinary from "../lib/cloudinary.js";
 
 // helper function for cloudinary uploads
-const uploadToCloudinary = async (file) => {
+const uploadToCloudinary = async (file, type = "image") => {
 	try {
 		if (!file) {
 			throw new Error("No file provided");
 		}
 
-		// Validate file type
-		const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-		if (!allowedTypes.includes(file.mimetype)) {
-			throw new Error("Invalid file type. Only JPEG, PNG, GIF and WebP images are allowed");
+		// Kiểm tra loại MIME
+		const allowedTypes = {
+			image: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+			audio: ["audio/mpeg", "audio/mp3", "audio/wav"],
+			video: ["video/mp4"]
+		};
+
+		if (!allowedTypes[type]?.includes(file.mimetype)) {
+			throw new Error(`Invalid ${type} file type`);
 		}
 
-		// Validate file size (5MB max)
-		const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-		if (file.size > maxSize) {
-			throw new Error("File size too large. Maximum size is 5MB");
+		// Giới hạn kích thước (ảnh < 5MB, audio/video < 50MB)
+		const sizeLimits = {
+			image: 5 * 1024 * 1024,
+			audio: 50 * 1024 * 1024,
+			video: 100 * 1024 * 1024,
+		};
+
+		if (file.size > sizeLimits[type]) {
+			throw new Error(`File size too large. Max ${sizeLimits[type] / 1024 / 1024}MB`);
 		}
 
+		// Upload
 		const result = await cloudinary.uploader.upload(file.tempFilePath, {
-			resource_type: "auto",
-			folder: "spotify-project", // Organize uploads in a folder
-			quality: "auto", // Optimize image quality
-			fetch_format: "auto" // Automatically choose the best format
+			resource_type: type === "image" ? "image" : "video", // Cloudinary dùng "video" cho cả audio & video
+			folder: "spotify-project",
+			quality: "auto",
+			fetch_format: "auto"
 		});
 
 		return result.secure_url;
@@ -34,6 +45,7 @@ const uploadToCloudinary = async (file) => {
 		throw new Error(error.message || "Error uploading to cloudinary");
 	}
 };
+
 
 export const createSong = async (req, res, next) => {
 	try {
@@ -49,8 +61,9 @@ export const createSong = async (req, res, next) => {
 		const audioFile = req.files.audioFile;
 		const imageFile = req.files.imageFile;
 
-		const audioUrl = await uploadToCloudinary(audioFile);
-		const imageUrl = await uploadToCloudinary(imageFile);
+		const audioUrl = await uploadToCloudinary(audioFile, "audio"); // thêm "audio"
+		const imageUrl = await uploadToCloudinary(imageFile, "image"); // rõ ràng hơn
+
 
 		const song = new Song({
 			title,
@@ -141,14 +154,14 @@ export const editSong = async (req, res, next) => {
 		}
 		// Xử lí file âm thanh mới
 		if (req.files?.audioFile) {
-			const audioUrl = await uploadToCloudinary(req.files.audioFile);
+			const audioUrl = await uploadToCloudinary(req.files.audioFile, "audio");
 			updateData.audioUrl = audioUrl;
 		}
-		// Xử lí file ảnh mới
 		if (req.files?.imageFile) {
-			const imageUrl = await uploadToCloudinary(req.files.imageFile);
+			const imageUrl = await uploadToCloudinary(req.files.imageFile, "image");
 			updateData.imageUrl = imageUrl;
 		}
+
 		// Cập nhật bài hát
 		const updateSong = await Song.findByIdAndUpdate(id, updateData, {
 			new: true

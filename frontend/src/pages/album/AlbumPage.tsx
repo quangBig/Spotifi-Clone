@@ -279,7 +279,7 @@ const AlbumPage = () => {
 															}`}
 														onClick={(e) => handleToggleSongFavorite(song, e)}
 													>
-														<Heart className={`w-4 h-4 ${isSongFavorite ? 'fill-current' : ''}`} />
+														<Heart className={`w-4 h-4 ${isSongFavorite ? 'fill-current ' : ''}`} />
 													</Button>
 												</div>
 											</div>
