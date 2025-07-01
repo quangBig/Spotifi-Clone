@@ -42,7 +42,7 @@ const SectionGrid = ({ songs, title, isLoading }: SectionGridProps) => {
 
 							{/* Nút play nằm giữa đĩa */}
 							<div className="absolute inset-0 flex items-center justify-center">
-								<PlayButton song={song} className="size-10" />
+								<PlayButton song={song} />
 							</div>
 						</div>
 

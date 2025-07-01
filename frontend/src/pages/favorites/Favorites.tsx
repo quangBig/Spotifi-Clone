@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Topbar from "@/components/Topbar";
 import { useFavoritesStore } from "@/stores/useFavoritesStore";
 import { usePlayerStore } from "@/stores/usePlayerStore";
-import { Clock, Play, Pause, Heart, Music, Album, Trash2 } from "lucide-react";
+import { Clock, Play, Heart, Music, Album, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
@@ -20,7 +20,7 @@ const Favorites = () => {
     const navigate = useNavigate();
     const { userId } = useAuth();
     const { favorites, isLoading, error, fetchFavorites, removeFavorite } = useFavoritesStore();
-    const { currentSong, isPlaying, setCurrentSong, togglePlay } = usePlayerStore();
+    const { currentSong, isPlaying, setCurrentSong } = usePlayerStore();
     const [activeTab, setActiveTab] = useState<'all' | 'songs' | 'albums'>('all');
 
     useEffect(() => {

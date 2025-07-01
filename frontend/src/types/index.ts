@@ -26,6 +26,11 @@ export interface Stats {
 	totalUsers: number;
 	totalArtists: number;
 }
+export interface Reaction {
+	userId: string;
+	emoji: string;
+	createAt: string;
+}
 
 export interface Message {
 	_id: string;
@@ -34,6 +39,7 @@ export interface Message {
 	content: string;
 	createdAt: string;
 	updatedAt: string;
+	reactions?: Reaction[];
 }
 
 export interface User {

@@ -71,7 +71,11 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
     }, {} as Record<string, Reaction[]>);
 
     return (
+
         <div className="group relative w-full">
+            {showEmojiPicker && (
+                <div> Emoji picker ở đây </div>
+            )}
             {/* Action bar: Emoji + Sửa/Xóa */}
             <div
                 className={`
